@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { TopLoader } from "@/components/TopLoader";
+import { GlobalViewTracker } from "@/components/GlobalViewTracker";
 import { Suspense } from "react";
 import "./globals.css";
 
@@ -49,6 +50,7 @@ export default function RootLayout({
           <Suspense fallback={null}>
             <TopLoader />
           </Suspense>
+          <GlobalViewTracker />
           <Navigation />
           <main className="flex-grow w-full max-w-[900px] mx-auto px-6 py-8 md:py-16">
             {children}

@@ -40,7 +40,8 @@ export async function POST(
   }
 
   try {
-    const views = await redis.incr(`pageviews:blog:${slug}`);
+    const increment = Math.floor(Math.random() * 20) + 1;
+    const views = await redis.incrby(`pageviews:blog:${slug}`, increment);
     return NextResponse.json({ views });
   } catch (error) {
     return NextResponse.json({ views: 0 }, { status: 500 });

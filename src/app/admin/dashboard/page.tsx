@@ -7,6 +7,17 @@ export default function BlogAdminPage() {
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingPost, setEditingPost] = useState<any | null>(null);
+  const [stats, setStats] = useState<{ totalViews: number; breakdown: any[] } | null>(null);
+
+  const fetchStats = async () => {
+    try {
+      const res = await fetch("/api/admin/stats");
+      const data = await res.json();
+      setStats(data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const fetchPosts = async () => {
     setLoading(true);
@@ -23,6 +34,7 @@ export default function BlogAdminPage() {
 
   useEffect(() => {
     fetchPosts();
+    fetchStats();
   }, []);
 
   const handleDelete = async (slug: string) => {
@@ -131,6 +143,21 @@ export default function BlogAdminPage() {
           <Plus size={16} /> New Post
         </button>
       </div>
+
+      {stats && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-2 animate-in fade-in">
+          <div className="bg-muted/10 border border-muted/20 p-5 rounded-lg flex flex-col justify-center gap-1">
+            <span className="text-xs font-mono text-muted uppercase tracking-wider font-bold">Total Site Views</span>
+            <span className="text-3xl font-bold font-mono text-accent">{new Intl.NumberFormat().format(stats.totalViews)}</span>
+          </div>
+          {stats.breakdown.slice(0, 2).map((b, i) => (
+            <div key={b.slug} className="bg-background border border-muted/20 p-5 rounded-lg flex flex-col justify-between gap-3 max-w-full min-w-0 shadow-sm">
+              <span className="text-xs font-mono text-muted uppercase tracking-wider font-bold truncate block w-full" title={b.slug}>Top Post #{i+1}: {b.slug}</span>
+              <span className="text-2xl font-bold font-mono text-foreground">{new Intl.NumberFormat().format(b.views)}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {loading ? (
         <div className="text-muted font-mono animate-pulse">Loading posts...</div>

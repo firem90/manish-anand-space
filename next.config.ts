@@ -2,7 +2,14 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   devIndicators: false,
-  serverExternalPackages: ['@excalidraw/excalidraw'],
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'books.google.com',
+      },
+    ],
+  },
 };
 
 export default nextConfig;

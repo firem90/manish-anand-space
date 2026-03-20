@@ -54,25 +54,22 @@ export function BooksClient({ books }: { books: any[] }) {
           <div className="flex gap-1 p-1 bg-muted/10 rounded-sm font-mono text-sm self-start">
             <button
               onClick={() => { setBookType("all"); setActiveCategory(null); }}
-              className={`px-3 py-1.5 rounded-sm transition-colors ${
-                bookType === "all" ? "bg-accent text-white" : "text-muted hover:text-foreground"
-              }`}
+              className={`px-3 py-1.5 rounded-sm transition-colors ${bookType === "all" ? "bg-accent text-white" : "text-muted hover:text-foreground"
+                }`}
             >
               All Types
             </button>
             <button
               onClick={() => { setBookType("technical"); setActiveCategory(null); }}
-              className={`px-3 py-1.5 rounded-sm transition-colors ${
-                bookType === "technical" ? "bg-accent text-white" : "text-muted hover:text-foreground"
-              }`}
+              className={`px-3 py-1.5 rounded-sm transition-colors ${bookType === "technical" ? "bg-accent text-white" : "text-muted hover:text-foreground"
+                }`}
             >
               Technical
             </button>
             <button
               onClick={() => { setBookType("personal"); setActiveCategory(null); }}
-              className={`px-3 py-1.5 rounded-sm transition-colors ${
-                bookType === "personal" ? "bg-accent text-white" : "text-muted hover:text-foreground"
-              }`}
+              className={`px-3 py-1.5 rounded-sm transition-colors ${bookType === "personal" ? "bg-accent text-white" : "text-muted hover:text-foreground"
+                }`}
             >
               Personal
             </button>
@@ -104,11 +101,10 @@ export function BooksClient({ books }: { books: any[] }) {
         <div className="flex flex-wrap gap-2 pb-2">
           <button
             onClick={() => setActiveCategory(null)}
-            className={`font-mono text-xs px-3 py-1.5 rounded-sm transition-colors whitespace-nowrap ${
-              activeCategory === null
-                ? "bg-accent text-white"
-                : "bg-muted/10 text-muted hover:text-foreground"
-            }`}
+            className={`font-mono text-xs px-3 py-1.5 rounded-sm transition-colors whitespace-nowrap ${activeCategory === null
+              ? "bg-accent text-white"
+              : "bg-muted/10 text-muted hover:text-foreground"
+              }`}
           >
             all
           </button>
@@ -116,11 +112,10 @@ export function BooksClient({ books }: { books: any[] }) {
             <button
               key={cat as string}
               onClick={() => setActiveCategory(cat as string)}
-              className={`font-mono text-xs px-3 py-1.5 rounded-sm transition-colors whitespace-nowrap ${
-                activeCategory === cat
-                  ? "bg-accent text-white"
-                  : "bg-muted/10 text-muted hover:text-foreground"
-              }`}
+              className={`font-mono text-xs px-3 py-1.5 rounded-sm transition-colors whitespace-nowrap ${activeCategory === cat
+                ? "bg-accent text-white"
+                : "bg-muted/10 text-muted hover:text-foreground"
+                }`}
             >
               {cat as string}
             </button>
@@ -145,12 +140,12 @@ function BookSection({ title, books, showNotes }: { title: string; books: any[];
           <article key={book.isbn} className="flex flex-col gap-3 group">
             <div className="aspect-[2/3] w-full relative object-cover bg-muted/10 rounded overflow-hidden">
               <Image
-                src={`https://covers.openlibrary.org/b/isbn/${book.isbn}-L.jpg`}
+                src={`https://books.google.com/books/content?vid=ISBN${book.isbn}&printsec=frontcover&img=1&zoom=1`}
                 alt={`Cover of ${book.title}`}
                 fill
                 sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                 className="object-cover group-hover:scale-105 transition-transform duration-300"
-                unoptimized
+              // unoptimized
               />
             </div>
             <div>

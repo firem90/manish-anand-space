@@ -1,0 +1,47 @@
+---
+title: "Migrating 1.2 Million Users to Okta with Spring Batch"
+date: "2025-11-15"
+tags: ["java", "spring-batch", "migration"]
+summary: "What actually happens when you move a million users to a new identity provider and it has to work on the first try."
+---
+
+Identity migrations are uniquely terrifying. A dropped column in a reporting database can be backfilled. A locked-out user on Monday morning, multiplied by a million, is an extinction-level event for consumer trust.
+
+When migrating our legacy bespoke auth system to Okta, the requirements were absolute: zero downtime for active users, perfect mapping of legacy state to the new identity provider, and a strict change window. 
+
+This is the dissection of how we pulled it off using Spring Batch.
+
+## Architecture
+
+We couldn't do a "lift and shift" because the legacy custom database stored hashed credentials in a defunct format that Okta wouldn't accept natively without a custom hook.
+
+Our architecture involved:
+- **Reader**: A paginated `JdbcPagingItemReader` that pulled users in highly deterministic chunks, sorted by internal ID to prevent offset drifting.
+- **Processor**: A complex translation layer that mapped legacy roles to standard Groups in Okta, handling silent data corruption we discovered mid-flight.
+- **Writer**: A custom `ItemWriter` wrapping the Okta Management SDK, heavily bulked into concurrent API calls.
+
+```java
+@Bean
+public Step userMigrationStep() {
+    return stepBuilderFactory.get("userMigrationStep")
+            .<LegacyUser, OktaUser>chunk(100)
+            .reader(jdbcReader())
+            .processor(translationProcessor())
+            .writer(oktaWriter())
+            .faultTolerant()
+            .retryLimit(3)
+            .retry(OktaRateLimitException.class)
+            .skipPolicy(new CorruptIdentitySkipPolicy())
+            .build();
+}
+```
+
+## The "What Went Wrong" Mid-Migration
+
+About 400,000 records in, we started hitting strict rate-limits from Okta on the `POST /api/v1/users` endpoint. Our initial resilience strategy was just exponential backoff, which worked perfectly in staging.
+
+However, in production, the accumulated backoff across our heavily parallelized Spring Batch instances caused a cascading pool exhaustion on our database connection pool. The readers stayed open for minutes at a time waiting for the writers to clear their Okta backoff sleeps.
+
+The fix was dynamic rate-limit detection: catching the 429 response `x-rate-limit-reset` header, pausing the specific `TaskExecutor` thread pool, and releasing the JDBC connections back to HikariCP temporarily.
+
+Identity systems are unforgiving, but Spring Batch is bulletproof. The migration finished successfully with exactly zero locked-out users the next morning.

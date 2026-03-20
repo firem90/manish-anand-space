@@ -1,0 +1,20 @@
+[
+  {
+    "date": "2026-03-10",
+    "title": "Caffeine uses Window TinyLFU, not LRU",
+    "content": "Caffeine cache uses Window TinyLFU eviction policy, not LRU. Under skewed access patterns (which is most production traffic), TinyLFU has significantly better hit rates. Worth understanding before you assume caches behave uniformly.",
+    "tags": ["java", "caching"]
+  },
+  {
+    "date": "2026-02-28",
+    "title": "Java 21 virtual threads pin on synchronized blocks",
+    "content": "Virtual threads in Java 21 get pinned to the carrier thread when they hit a synchronized block or native method. This kills the concurrency benefit. Use ReentrantLock instead of synchronized if you're adopting virtual threads seriously.",
+    "tags": ["java"]
+  },
+  {
+    "date": "2026-02-15",
+    "title": "Apple Wallet pass updates require full pkpass regeneration",
+    "content": "There is no partial update or patch API for Apple Wallet passes. Every update — including what appears as a push notification — requires regenerating the entire pkpass bundle and pushing it to Apple's servers. Plan your architecture accordingly.",
+    "tags": ["fintech", "distributed-systems"]
+  }
+]

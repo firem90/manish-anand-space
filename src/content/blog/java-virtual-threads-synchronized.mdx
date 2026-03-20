@@ -1,0 +1,45 @@
+---
+title: "Java 21 Virtual Threads Pin on Synchronized Blocks"
+date: "2026-02-28"
+tags: ["java", "concurrency", "virtual-threads"]
+summary: "Virtual threads are not a drop-in replacement for platform threads. Synchronized blocks cause carrier thread pinning, silently destroying your throughput under load."
+---
+
+Java 21 virtual threads promise lightweight concurrency without the complexity of reactive frameworks. Spin up a million of them, let Project Loom handle the scheduling, and move on. Except there's a catch that bit us hard in production.
+
+## The Problem
+
+When a virtual thread enters a `synchronized` block and performs a blocking operation inside it (like I/O), it **pins** to its carrier platform thread. The virtual thread cannot be unmounted. The carrier thread is stuck until the blocking operation completes.
+
+This matters because the default `ForkJoinPool` that schedules virtual threads typically has only `Runtime.getRuntime().availableProcessors()` carrier threads. On a 4-core box, that's 4. Pin all 4 and your entire virtual thread pool is deadlocked.
+
+```java
+// This looks innocent but will pin the carrier thread
+synchronized (lock) {
+    // Any blocking I/O here pins the virtual thread
+    var result = httpClient.send(request, BodyHandlers.ofString());
+}
+```
+
+## What We Saw
+
+Our service handled ~2,000 concurrent requests. After migrating from a cached thread pool to virtual threads, p99 latency spiked from 45ms to 12 seconds under sustained load. Thread dumps showed all carrier threads pinned inside `synchronized` blocks in a third-party JDBC driver.
+
+## The Fix
+
+Replace `synchronized` with `ReentrantLock`. Unlike `synchronized`, `ReentrantLock` allows the virtual thread to properly unmount from its carrier during blocking operations inside the critical section.
+
+```java
+private final ReentrantLock lock = new ReentrantLock();
+
+public void doWork() {
+    lock.lock();
+    try {
+        var result = httpClient.send(request, BodyHandlers.ofString());
+    } finally {
+        lock.unlock();
+    }
+}
+```
+
+After switching, p99 dropped back to 38ms. The takeaway: virtual threads are excellent, but `synchronized` is now a code smell in any hot path. Audit your dependencies — many JDBC drivers and HTTP clients still use `synchronized` internally.

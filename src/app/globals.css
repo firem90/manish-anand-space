@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+@theme {
+  --font-mono: var(--font-jetbrains-mono), monospace;
+  --font-serif: var(--font-lora), serif;
+  --font-sans: var(--font-inter), sans-serif;
+
+  --color-bg-dark: #111111;
+  --color-bg-light: #f8f8f6;
+  --color-text-dark: #d4d4d8;
+  --color-text-light: #1a1a1a;
+  --color-muted: #71717a;
+  --color-accent: #e60000;
+
+  /* No shadows, no gradients */
+  --shadow-*: initial;
+}
+
+@layer base {
+  :root {
+    --background: var(--color-bg-light);
+    --foreground: var(--color-text-light);
+  }
+  
+  .dark {
+    --background: var(--color-bg-dark);
+    --foreground: var(--color-text-dark);
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    @apply font-sans antialiased selection:bg-accent selection:text-white transition-colors duration-200;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-mono font-bold tracking-tight;
+  }
+
+  p, li {
+    @apply leading-relaxed;
+  }
+}
+
+@layer utilities {
+  .text-muted {
+    @apply text-[var(--color-muted)];
+  }
+  .text-accent {
+    @apply text-[var(--color-accent)];
+  }
+  .bg-accent {
+    @apply bg-[var(--color-accent)];
+  }
+  .border-accent {
+    @apply border-[var(--color-accent)];
+  }
+}

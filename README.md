@@ -43,8 +43,6 @@ UPSTASH_REDIS_REST_TOKEN=
 RESEND_API_KEY=
 ```
 
-*Note: The app will run without these variables. The view counter will fall back to a mock random number, and the contact form will simulate a 1-second network success.*
-
 ## Managing Content
 
 All content is driven locally by files in the `src/content/` directory.

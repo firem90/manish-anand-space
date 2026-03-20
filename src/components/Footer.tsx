@@ -16,7 +16,7 @@ export function Footer() {
               <span className="hidden sm:inline">Email</span>
             </a>
             <a
-              href="https://github.com/manish-ananda"
+              href="https://github.com/firem90"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-accent transition-colors min-h-[44px] flex items-center gap-2"
@@ -26,7 +26,7 @@ export function Footer() {
               <span className="hidden sm:inline">GitHub</span>
             </a>
             <a
-              href="https://linkedin.com/in/manish-anandaeswaran"
+              href="https://linkedin.com/in/manish-a-e"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-accent transition-colors min-h-[44px] flex items-center gap-2"
@@ -36,7 +36,7 @@ export function Footer() {
               <span className="hidden sm:inline">LinkedIn</span>
             </a>
             <a
-              href="https://instagram.com/manish.ananda"
+              href="https://www.instagram.com/mantel.of.mind?igsh=Y3ZobTY0cTVyMWJ0&utm_source=qr"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-accent transition-colors min-h-[44px] flex items-center gap-2"

@@ -152,7 +152,7 @@ export default function Home() {
           </div>
           <div className="flex flex-col sm:flex-row gap-6 items-start">
             <img
-              src={`https://covers.openlibrary.org/b/isbn/${currentlyReading.isbn}-M.jpg`}
+              src={`https://books.google.com/books/content?vid=ISBN${currentlyReading.isbn}&printsec=frontcover&img=1&zoom=1`}
               alt={`Cover of ${currentlyReading.title}`}
               className="w-24 md:w-32 rounded shadow-sm opacity-90 hover:opacity-100 transition-opacity"
               loading="lazy"

@@ -1,0 +1,34 @@
+---
+title: "How I Solved Apple Wallet's Missing Notification API"
+date: "2026-03-01"
+tags: ["fintech", "java", "distributed-systems"]
+summary: "Apple explicitly doesn't support push notifications for wallet passes. We built a system that does it anyway — full pkpass regeneration and push delivery in under 10 seconds."
+---
+
+Apple explicitly doesn't support push notifications for wallet passes using a direct, on-demand API. Once a pass is on a user’s device, Apple expects that you setup an APNs endpoint using the pass’s specific `passTypeIdentifier` and `pushToken`. When the developer sends an empty APNs notification, the device then asks the developer’s server for the latest pass.
+
+It’s an elegant, battery-saving pull mechanism. But it completely falls apart when you need to send time-critical, geo-fenced promotional pushes to a specific user triggered by backend events.
+
+Here is how we bypassed the limitation to deliver end-to-end updates in under 10 seconds.
+
+## The Workaround
+
+Instead of trying to hack the APNs payload (which Apple rejects), we chose to exploit the pass update mechanism itself. When our backend determines that a user needs a notification:
+
+1. **Trigger Detection**: An asynchronous worker (listening on an AWS SQS queue) receives the event.
+2. **Bundle Regeneration**: Our service dynamically regenerates the entire `.pkpass` bundle. This involves fetching the user's specific barcode, rendering the JSON, signing it with our WWDR intermediate certificate, and creating a new manifest.
+3. **Change Field Injection**: We inject a temporary "change message" into one of the back fields of the pass. Apple's OS scans the differences between the old and new pass; if a field's `changeMessage` triggers, the OS displays an alert (notification) to the user.
+4. **Delivery via APNs**: We send the empty APNs ping to the device.
+5. **Device Pulls Update**: The device fetches the new, freshly-rendered pass which contains the new backfield data, showing our intended alert.
+
+<Diagram file="apple-wallet-notification-flow" caption="End-to-end notification delivery — from trigger to device in under 10 seconds" />
+
+## Architecture
+
+To ensure high availability and reliability for millions of users, we built this flow on top of:
+- **AWS SQS** for absorbing sudden spikes in event generation.
+- **Java 21 / Spring Boot** leveraging virtual threads to concurrently process thousands of signing operations per second.
+- **Redis (Caffeine L2)** to dramatically reduce database hits when fetching the baseline pass templates before injection.
+- **Resilience4j** for safe fallbacks when the APNs gateway stutters.
+
+It shouldn't be possible, but it is. And it works beautifully in production.

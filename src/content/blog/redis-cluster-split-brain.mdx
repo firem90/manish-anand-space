@@ -1,0 +1,45 @@
+---
+title: "Surviving a Redis Cluster Split-Brain"
+date: "2026-01-20"
+tags: ["redis", "distributed-systems", "reliability"]
+summary: "When your Redis cluster partitions, both sides think they're the master. Here's what actually happens to your data and how to design for it."
+---
+
+A Redis Cluster split-brain occurs when a network partition divides the cluster, and a replica gets promoted to master on the minority side. For a brief window, you have two nodes accepting writes for the same hash slots. When the partition heals, one side's writes are silently discarded.
+
+This is not theoretical. It happened to us during a routine network maintenance window.
+
+## What Went Wrong
+
+Our 6-node Redis Cluster (3 masters, 3 replicas) spanned two availability zones. A network blip lasting 14 seconds caused the replicas in AZ-B to promote themselves. For those 14 seconds, both AZ-A and AZ-B masters accepted writes for the same slots.
+
+When connectivity restored, the AZ-B nodes recognized the original masters had higher epoch numbers and demoted themselves, **dropping approximately 800 writes**.
+
+## The Mitigation Stack
+
+There is no way to fully prevent split-brain in Redis Cluster. But you can make it survivable:
+
+**1. `min-replicas-to-write`**
+
+Configure masters to refuse writes unless at least N replicas are reachable. This prevents the minority-side master from accepting writes during a partition.
+
+```
+min-replicas-to-write 1
+min-replicas-max-lag 10
+```
+
+**2. Client-side write journaling**
+
+Before writing to Redis, persist the operation to a local WAL (we used an embedded RocksDB). A background reconciler replays unacknowledged writes after a partition heals.
+
+**3. Application-level CRDTs**
+
+For counters and sets, we moved to conflict-free replicated data types. Instead of `SET key value`, we use `INCRBY` with idempotency keys, making conflicting writes convergent rather than destructive.
+
+**4. Monitoring the `cluster_state` metric**
+
+We added alerting on `cluster_state:fail` with a 5-second threshold. The earlier you detect a partition, the faster you can circuit-break writes if needed.
+
+## The Real Lesson
+
+Redis Cluster gives you horizontal scalability, not strong consistency. If you need writes to never be lost, either use a consensus-based store or accept that Redis is a best-effort cache and design your application to tolerate data loss at the edges.

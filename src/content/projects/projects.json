@@ -1,0 +1,10 @@
+[
+  {
+    "name": "Digital Wallet Pass Platform",
+    "status": "in-progress",
+    "description": "Microservice platform for Apple, Google and Samsung Wallet passes — creation, updates, geo-fenced notifications and promotional pushes. Sole architect and engineer.",
+    "stack": ["Java 21", "Spring Boot", "Redis", "AWS SQS", "Resilience4j", "Kubernetes"],
+    "github": null,
+    "note": "Production at Blackhawk Network — not open source"
+  }
+]

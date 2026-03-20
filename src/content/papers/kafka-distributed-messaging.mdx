@@ -1,0 +1,29 @@
+---
+title: "Kafka: A Distributed Messaging System for Log Processing"
+authors: "Kreps, Narkhede, Rao"
+year: 2011
+paperUrl: "https://pages.cs.wisc.edu/~akella/CS838/F12/838-CloudPapers/kafka.pdf"
+date: "2025-12-01"
+tags: ["distributed-systems", "messaging"]
+summary: "Before you use Kafka in production, understand why it was built."
+---
+
+This paper is deceptively short, but it captures the core insight that made Kafka the backbone of modern data infrastructure: **treat every data flow as a log.**
+
+## The Problem It Solved
+
+LinkedIn's data pipeline was a mess of point-to-point connections. Every new consumer of data required a new integration. The system didn't scale organizationally, let alone technically.
+
+## The Key Design Decisions
+
+**Pull-based consumption** is the single most important decision in Kafka's design. By letting consumers control their own offset into the log, Kafka eliminates the need for complex broker-side state management. A consumer can replay, rewind, or skip ahead independently.
+
+**Partitioned, append-only logs** give Kafka its throughput characteristics. Writes are sequential I/O (fast on spinning disks, absurdly fast on SSDs). Reads are sequential too, since consumers process partitions in order.
+
+**No per-message acknowledgment** — Kafka tracks offsets, not individual messages. This is a dramatic simplification compared to traditional message queues like RabbitMQ. The tradeoff is that you might reprocess messages after a consumer crash, which means your consumers must be idempotent.
+
+## What Changed My Thinking
+
+Before reading this paper, I thought of message queues as infrastructure for "sending messages between services." After reading it, I understood them as **distributed commit logs** — an abstraction that unifies messaging, event sourcing, CDC, and stream processing.
+
+The paper convinced me that the log is the foundational data structure for distributed systems. If you get the log right, everything else — databases, caches, search indexes — are just materialized views of that log.

@@ -1,0 +1,67 @@
+---
+title: "Building a Pluggable Logger System"
+date: "2026-03-20"
+tags: ["systems", "architecture", "logging"]
+summary: "A walkthrough of designing a modular logger with swappable handlers for console, file, and remote output."
+---
+
+Every non-trivial application eventually outgrows `console.log`. Here's how I think about designing a logger that can grow with your system.
+
+## The Architecture
+
+The core idea is simple: separate the **what** (log messages) from the **where** (output destinations). The application calls a single `log()` function, and the logger core routes messages through one or more handlers.
+
+<Diagram file="logger system" caption="Logger system architecture — application → core → handlers" />
+
+## Log Levels
+
+A good logger supports multiple severity levels. Each handler can independently filter by level:
+
+```typescript
+enum LogLevel {
+  DEBUG = 0,
+  INFO = 1,
+  WARN = 2,
+  ERROR = 3,
+  FATAL = 4,
+}
+```
+
+The console handler might show everything during development, while the remote handler only ships `WARN` and above to your monitoring service.
+
+## The Handler Interface
+
+Each handler implements a minimal interface:
+
+```typescript
+interface LogHandler {
+  level: LogLevel;
+  write(entry: LogEntry): void;
+  flush?(): Promise<void>;
+}
+```
+
+This makes it trivial to add new destinations — Datadog, CloudWatch, a Slack webhook — without touching the core logger.
+
+## Structured Logging
+
+The real power comes from structured entries. Instead of string interpolation, every log entry carries typed metadata:
+
+```typescript
+interface LogEntry {
+  timestamp: number;
+  level: LogLevel;
+  message: string;
+  context: Record<string, unknown>;
+  correlationId?: string;
+}
+```
+
+Correlation IDs let you trace a request across service boundaries. This is essential in distributed systems where a single user action might fan out across dozens of services.
+
+## Takeaways
+
+1. Keep the core logger thin — it should only route messages
+2. Make handlers independently configurable
+3. Always use structured logging from day one
+4. Add correlation IDs early — retrofitting them is painful

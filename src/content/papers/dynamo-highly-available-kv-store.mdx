@@ -1,0 +1,33 @@
+---
+title: "Dynamo: Amazon's Highly Available Key-Value Store"
+authors: "DeCandia et al."
+year: 2007
+paperUrl: "https://www.allthingsdistributed.com/files/amazon-dynamo-sosp2007.pdf"
+date: "2026-01-15"
+tags: ["distributed-systems", "databases"]
+summary: "The paper that defined eventual consistency for a generation of distributed systems engineers."
+---
+
+Dynamo is the paper that made me truly understand why distributed systems are hard. It's not about the algorithms — it's about the tradeoffs.
+
+## Why This Paper Matters
+
+Before Dynamo, most systems chose consistency over availability. Dynamo flipped that assumption for Amazon's shopping cart service, arguing that **an always-writable store is more valuable than a perfectly consistent one** when you're operating at planetary scale.
+
+## Key Insights
+
+**Consistent hashing with virtual nodes** is the backbone of Dynamo's partitioning. Each physical node owns multiple virtual nodes on the ring, which means adding or removing a node only shifts a small, predictable portion of the key space.
+
+**Vector clocks for conflict resolution** allow Dynamo to accept writes on any replica without coordination. When replicas diverge, the system can detect the conflict and punt the resolution to the application layer. This is a pragmatic decision — the database shouldn't guess what the right merge strategy is.
+
+**Sloppy quorum and hinted handoff** guarantee that writes succeed even when the designated nodes are unreachable. A write intended for node A can be temporarily stored on node D, with a "hint" to forward it to A when it recovers. This is what makes Dynamo "always writable."
+
+## What I Took Away
+
+The biggest lesson from Dynamo isn't any single technique. It's the rigorous framework for thinking about tradeoffs:
+
+- **Consistency** vs. **Availability** — you genuinely cannot have both under partition.
+- **Latency** vs. **Durability** — synchronous replication is safe but slow.
+- **Simplicity** vs. **Flexibility** — application-level conflict resolution is powerful but burdens the developer.
+
+Every time I design a distributed system, I find myself returning to Dynamo's framework. It's the foundational text.

@@ -1,0 +1,18 @@
+[
+  {
+    "title": "Dynamo: Amazon's Highly Available Key-Value Store",
+    "authors": "DeCandia et al.",
+    "year": 2007,
+    "url": "https://www.allthingsdistributed.com/files/amazon-dynamo-sosp2007.pdf",
+    "why": "The paper that defined eventual consistency for a generation of distributed systems engineers.",
+    "tags": ["distributed-systems", "databases"]
+  },
+  {
+    "title": "Kafka: a Distributed Messaging System for Log Processing",
+    "authors": "Kreps, Narkhede, Rao",
+    "year": 2011,
+    "url": "https://pages.cs.wisc.edu/~akella/CS838/F12/838-CloudPapers/kafka.pdf",
+    "why": "Before you use Kafka in production, understand why it was built.",
+    "tags": ["distributed-systems", "messaging"]
+  }
+]

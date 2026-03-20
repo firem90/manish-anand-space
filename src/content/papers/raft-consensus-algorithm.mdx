@@ -1,0 +1,33 @@
+---
+title: "Raft: In Search of an Understandable Consensus Algorithm"
+authors: "Ongaro, Ousterhout"
+year: 2014
+paperUrl: "https://raft.github.io/raft.pdf"
+date: "2025-10-20"
+tags: ["distributed-systems", "consensus"]
+summary: "Raft proved that consensus doesn't have to be incomprehensible. A masterclass in designing for understandability."
+---
+
+Paxos is famously difficult to understand. Raft exists because Diego Ongaro and John Ousterhout believed that understandability is a first-class design goal, not a nice-to-have.
+
+## Why Raft Over Paxos
+
+The paper's argument isn't that Raft is more correct or more performant than Paxos — it's that **Raft is decomposable**. The algorithm breaks cleanly into three subproblems:
+
+1. **Leader election** — at most one leader per term.
+2. **Log replication** — the leader appends entries and replicates them.
+3. **Safety** — a committed entry is never overwritten.
+
+Each subproblem can be understood, implemented, and tested independently. Try doing that with Multi-Paxos.
+
+## The Details That Matter
+
+**Randomized election timeouts** prevent split votes without requiring a separate coordination mechanism. It's a beautifully simple solution — each candidate waits a random duration before starting an election, making simultaneous elections statistically unlikely.
+
+**Log matching property** is the invariant that ties everything together: if two logs contain an entry with the same index and term, then the logs are identical up to that point. This single property makes it possible to reason about correctness without considering the full state space.
+
+**Joint consensus for membership changes** handles the terrifying problem of reconfiguring a cluster without downtime. The two-phase approach ensures there's no point in time where two independent majorities could exist.
+
+## Practical Impact
+
+I've used Raft's principles when implementing leader-based coordination in services that needed exactly-once processing guarantees. Even when you're not implementing Raft directly, understanding it changes how you think about fault tolerance. The decomposition into leader election, replication, and safety is a mental framework I apply to every distributed protocol I encounter.

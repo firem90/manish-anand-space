@@ -1,0 +1,80 @@
+[
+  {
+    "title": "Designing Data-Intensive Applications",
+    "author": "Martin Kleppmann",
+    "isbn": "9781449373320",
+    "status": "reading",
+    "category": "distributed-systems",
+    "type": "technical",
+    "take": "The book that reorganized everything I thought I knew about databases.",
+    "notesSlug": "ddia-notes"
+  },
+  {
+    "title": "Release It!",
+    "author": "Michael Nygard",
+    "isbn": "9781680502398",
+    "status": "want-to-read",
+    "category": "software-engineering",
+    "type": "technical",
+    "notesSlug": "release-it-notes"
+  },
+  {
+    "title": "Clean Architecture",
+    "author": "Robert C. Martin",
+    "isbn": "9780134494166",
+    "status": "want-to-read",
+    "category": "software-engineering",
+    "type": "technical",
+    "take": "Vocabulary for what I'm already doing intuitively."
+  },
+  {
+    "title": "A Philosophy of Software Design",
+    "author": "John Ousterhout",
+    "isbn": "9781732102200",
+    "status": "want-to-read",
+    "category": "software-engineering",
+    "type": "technical",
+    "take": "About complexity — how it grows and how to fight it."
+  },
+  {
+    "title": "The Way of Kings",
+    "author": "Brandon Sanderson",
+    "isbn": "9780765365279",
+    "status": "read",
+    "category": "fantasy",
+    "type": "personal",
+    "take": "Sanderson's world-building is unmatched. The magic system, the politics, the characters — everything earns its place. Kaladin's arc is one of the best I've read."
+  },
+  {
+    "title": "Words of Radiance",
+    "author": "Brandon Sanderson",
+    "isbn": "9780765326362",
+    "status": "want-to-read",
+    "category": "fantasy",
+    "type": "personal"
+  },
+  {
+    "title": "The Da Vinci Code",
+    "author": "Dan Brown",
+    "isbn": "9780307474278",
+    "status": "read",
+    "category": "thriller",
+    "type": "personal"
+  },
+  {
+    "title": "Project Hail Mary",
+    "author": "Andy Weir",
+    "isbn": "9780593135204",
+    "status": "read",
+    "category": "sci-fi",
+    "type": "personal"
+  },
+  {
+    "title": "Klara and the Sun",
+    "author": "Kazuo Ishiguro",
+    "isbn": "9780571364886",
+    "status": "want-to-read",
+    "category": "literary-fiction",
+    "type": "personal"
+  }
+]

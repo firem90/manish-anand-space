@@ -1,0 +1,65 @@
+---
+title: "Designing Idempotent APIs That Actually Work"
+date: "2025-12-10"
+tags: ["api-design", "distributed-systems", "patterns"]
+summary: "Every API guide says 'make it idempotent.' Few explain what happens when your idempotency key store goes down, or when clients retry with mutated payloads."
+---
+
+Idempotency sounds simple: the same request applied multiple times should produce the same result. In practice, implementing it correctly in a distributed system is surprisingly nuanced.
+
+## The Naive Approach (and Why It Breaks)
+
+Most implementations start with an idempotency key table:
+
+```sql
+CREATE TABLE idempotency_keys (
+    key VARCHAR(255) PRIMARY KEY,
+    response JSONB NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+Client sends a request with an `Idempotency-Key` header. If the key exists, return the cached response. If not, process the request and store the response. Simple.
+
+Until it isn't.
+
+## Problem 1: The Race Condition
+
+Two identical requests arrive simultaneously. Both check the idempotency table, both see the key doesn't exist, both proceed to process the request. You've now charged a customer twice.
+
+**Fix:** Use `INSERT ... ON CONFLICT DO NOTHING` with a status column. The first request claims the key with status `processing`. The second request sees the key exists with `processing` status and polls until the response is available.
+
+```sql
+INSERT INTO idempotency_keys (key, status)
+VALUES ($1, 'processing')
+ON CONFLICT (key) DO NOTHING
+RETURNING key;
+```
+
+If the `RETURNING` clause returns nothing, the key was already claimed.
+
+## Problem 2: Mutated Payloads
+
+A client sends a request to create an order with `Idempotency-Key: abc123` and a payload of `{amount: 100}`. It times out. The client "corrects" the amount and retries with the same key but `{amount: 200}`.
+
+Should you return the original response for $100? Process the new $200 request?
+
+**Fix:** Hash the request body and store it alongside the key. On retry, compare hashes. If they differ, return a `422 Unprocessable Entity` — the client is misusing the idempotency contract.
+
+## Problem 3: Key Store Availability
+
+If your idempotency store is down, do you reject all requests (safe but causes an outage) or process them without idempotency protection (available but risks duplicates)?
+
+**Fix:** This is a business decision, not a technical one. For payment APIs, we reject. For notification APIs, we process and deduplicate asynchronously later. The key insight is that different endpoints within the same service can have different idempotency failure modes.
+
+## The Pattern We Settled On
+
+Every write endpoint gets an idempotency middleware that:
+
+1. Extracts the key from the header (required for POST/PUT, optional for DELETE)
+2. Attempts to claim the key with a body hash
+3. On conflict, compares body hashes and either returns cached response or 422
+4. On success, wraps the handler in a transaction that commits both the business logic and the idempotency response atomically
+5. TTLs keys after 24 hours
+
+This has processed over 50 million idempotent requests with zero detected duplicates.

@@ -2,11 +2,13 @@
   "name": "portfolio_final",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "sync-covers": "npx ts-node --project tsconfig.json scripts/syncBookCovers.ts"
   },
   "dependencies": {
     "@excalidraw/excalidraw": "^0.18.0",

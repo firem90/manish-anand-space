@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { BookCoverImage } from "@/components/BookCoverImage";
 import { getAllPosts } from "@/lib/blog";
 import fs from "fs";
 import path from "path";
@@ -151,12 +152,9 @@ export default function Home() {
             </Link>
           </div>
           <div className="flex flex-col sm:flex-row gap-6 items-start">
-            <img
-              src={`https://books.google.com/books/content?vid=ISBN${currentlyReading.isbn}&printsec=frontcover&img=1&zoom=1`}
-              alt={`Cover of ${currentlyReading.title}`}
-              className="w-24 md:w-32 rounded shadow-sm opacity-90 hover:opacity-100 transition-opacity"
-              loading="lazy"
-            />
+            <div className="w-24 md:w-32 aspect-[2/3] rounded shadow-sm opacity-90 hover:opacity-100 transition-opacity overflow-hidden shrink-0">
+              <BookCoverImage book={currentlyReading} />
+            </div>
             <div className="flex flex-col gap-2 pt-2">
               <h3 className="font-bold text-lg">{currentlyReading.title}</h3>
               <p className="text-muted font-mono text-sm">{currentlyReading.author}</p>

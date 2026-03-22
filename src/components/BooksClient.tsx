@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
+import { BookCoverImage } from "./BookCoverImage";
 
 type BookType = "technical" | "personal";
 
@@ -138,15 +138,8 @@ function BookSection({ title, books, showNotes }: { title: string; books: any[];
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
         {books.map((book: any) => (
           <article key={book.isbn} className="flex flex-col gap-3 group">
-            <div className="aspect-[2/3] w-full relative object-cover bg-muted/10 rounded overflow-hidden">
-              <Image
-                src={`https://books.google.com/books/content?vid=ISBN${book.isbn}&printsec=frontcover&img=1&zoom=1`}
-                alt={`Cover of ${book.title}`}
-                fill
-                sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                className="object-cover group-hover:scale-105 transition-transform duration-300"
-                unoptimized
-              />
+            <div className="aspect-[2/3] w-full relative bg-muted/10 rounded overflow-hidden">
+              <BookCoverImage book={book} />
             </div>
             <div>
               <h3 className="font-bold text-sm md:text-base leading-tight line-clamp-2" title={book.title}>

@@ -29,7 +29,12 @@ export default function PaperAdminPage() {
     if (!confirm(`Are you sure you want to delete "${slug}"?`)) return;
     
     try {
-      await fetch(`/api/admin/papers?slug=${slug}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/papers?slug=${slug}`, { method: "DELETE" });
+      if (!res.ok) {
+        const err = await res.json();
+        alert(`Error: ${err.error}`);
+        return;
+      }
       fetchPapers();
     } catch (e) {
       console.error("Failed to delete", e);

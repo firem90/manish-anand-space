@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
+import { saveFile } from "@/lib/github";
 
 export async function POST() {
   try {
@@ -32,12 +33,13 @@ export async function POST() {
     }
 
     if (updated) {
-      fs.writeFileSync(filePath, JSON.stringify(booksData, null, 2) + "\n");
+      await saveFile(filePath, JSON.stringify(booksData, null, 2) + "\n", "Sync book covers");
     }
 
     return NextResponse.json({ success: true, updated });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error in sync-book-covers API:", error);
+    if (error.message === "GitHub token expired or invalid") return NextResponse.json({ success: false, error: error.message }, { status: 401 });
     return NextResponse.json({ success: false, error: String(error) }, { status: 500 });
   }
 }

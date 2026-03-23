@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifySession } from "@/lib/admin";
 import fs from "fs";
 import path from "path";
+import { saveFile } from "@/lib/github";
 
 const BOOKS_FILE = path.join(process.cwd(), "src/content/books/books.json");
 
@@ -13,12 +14,8 @@ function getBooks() {
   return JSON.parse(data);
 }
 
-function saveBooks(books: any[]) {
-  const dir = path.dirname(BOOKS_FILE);
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-  fs.writeFileSync(BOOKS_FILE, JSON.stringify(books, null, 2), "utf8");
+async function saveBooks(books: any[]) {
+  await saveFile(BOOKS_FILE, JSON.stringify(books, null, 2), "Update books library");
 }
 
 export async function GET() {
@@ -63,10 +60,11 @@ export async function POST(req: NextRequest) {
       notesSlug: book.notesSlug || undefined,
     });
 
-    saveBooks(books);
+    await saveBooks(books);
     return NextResponse.json({ success: true, book: books[0] });
-  } catch (err) {
+  } catch (err: any) {
     console.error("Failed to add book:", err);
+    if (err.message === "GitHub token expired or invalid") return NextResponse.json({ error: err.message }, { status: 401 });
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
@@ -103,10 +101,11 @@ export async function PUT(req: NextRequest) {
       notesSlug: updatedFields.notesSlug || undefined,
     };
 
-    saveBooks(books);
+    await saveBooks(books);
     return NextResponse.json({ success: true, book: books[index] });
-  } catch (err) {
+  } catch (err: any) {
     console.error("Failed to update book:", err);
+    if (err.message === "GitHub token expired or invalid") return NextResponse.json({ error: err.message }, { status: 401 });
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
@@ -125,11 +124,12 @@ export async function DELETE(req: NextRequest) {
 
     let books = getBooks();
     books = books.filter((b: any) => b.isbn !== isbn);
-    saveBooks(books);
+    await saveBooks(books);
 
     return NextResponse.json({ success: true });
-  } catch (err) {
+  } catch (err: any) {
     console.error("Failed to delete book:", err);
+    if (err.message === "GitHub token expired or invalid") return NextResponse.json({ error: err.message }, { status: 401 });
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

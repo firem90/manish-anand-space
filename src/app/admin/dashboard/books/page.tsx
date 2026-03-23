@@ -58,7 +58,12 @@ export default function BooksAdminPage() {
     if (!confirm(`Are you sure you want to remove "${title}" from your bookshelf?`)) return;
     
     try {
-      await fetch(`/api/admin/books?isbn=${isbn}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/books?isbn=${isbn}`, { method: "DELETE" });
+      if (!res.ok) {
+        const err = await res.json();
+        alert(`Error: ${err.error}`);
+        return;
+      }
       fetchBooks();
     } catch (e) {
       console.error("Failed to delete", e);

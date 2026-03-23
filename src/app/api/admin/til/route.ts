@@ -53,6 +53,7 @@ export async function POST(req: NextRequest) {
       title: til.title,
       content: til.content,
       tags: til.tags || [],
+      draft: til.draft,
     });
 
     // Keep sorted by date descending just in case

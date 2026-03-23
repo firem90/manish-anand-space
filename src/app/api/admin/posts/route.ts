@@ -25,6 +25,7 @@ title: "${data.title.replace(/"/g, '\\"')}"
 date: "${data.date}"
 tags: [${data.tags.map((t: string) => `"${t}"`).join(", ")}]
 summary: "${(data.summary || "").replace(/"/g, '\\"')}"
+draft: ${data.draft ? "true" : "false"}
 ---
 
 ${data.content}

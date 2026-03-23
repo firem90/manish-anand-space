@@ -7,6 +7,8 @@ export default function PaperAdminPage() {
   const [papers, setPapers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingPaper, setEditingPaper] = useState<any | null>(null);
+  const [isDeploying, setIsDeploying] = useState(false);
+  const [deployCountdown, setDeployCountdown] = useState(60);
 
   const fetchPapers = async () => {
     setLoading(true);
@@ -56,6 +58,7 @@ export default function PaperAdminPage() {
       tags: (formData.get("tags") as string).split(",").map(t => t.trim()).filter(Boolean),
       summary: formData.get("summary"),
       content: formData.get("content"),
+      draft: formData.get("draft") === "on",
     };
 
     try {
@@ -67,7 +70,23 @@ export default function PaperAdminPage() {
       
       if (res.ok) {
         setEditingPaper(null);
-        fetchPapers();
+        if (window.location.hostname !== "localhost") {
+            setIsDeploying(true);
+            setDeployCountdown(60);
+            const interval = setInterval(() => {
+                setDeployCountdown(prev => {
+                    if (prev <= 1) {
+                        clearInterval(interval);
+                        setIsDeploying(false);
+                        fetchPapers();
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+        } else {
+            fetchPapers();
+        }
       } else {
         const err = await res.json();
         alert(`Error: ${err.error}`);
@@ -137,6 +156,11 @@ export default function PaperAdminPage() {
             <textarea id="content" name="content" defaultValue={editingPaper.content} required rows={15} className="bg-transparent border border-muted/30 focus:border-accent p-3 rounded-sm outline-none font-mono text-sm resize-y" placeholder="Write your insights here in Markdown..." />
           </div>
 
+          <label className="flex items-center gap-3 cursor-pointer select-none">
+            <input type="checkbox" name="draft" defaultChecked={editingPaper.draft} className="w-4 h-4 accent-accent" />
+            <span className="font-mono text-sm font-bold">Archive / Hide from public view</span>
+          </label>
+
           <button type="submit" className="bg-accent text-white font-bold py-2.5 rounded-sm hover:brightness-110 flex items-center justify-center gap-2">
             <Check size={18} /> Save Paper Insight
           </button>
@@ -164,7 +188,10 @@ export default function PaperAdminPage() {
           {papers.map((paper) => (
             <div key={paper.slug} className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 border border-muted/20 rounded-md bg-background/50 hover:bg-background transition-colors group">
               <div className="flex flex-col">
-                <h3 className="font-bold">{paper.title}</h3>
+                <h3 className="font-bold flex items-center gap-2">
+                  {paper.title}
+                  {paper.draft && <span className="text-[10px] bg-yellow-500/20 text-yellow-500 px-2 py-0.5 rounded-full uppercase tracking-widest font-bold">Archived</span>}
+                </h3>
                 <div className="flex items-center gap-3 text-xs font-mono text-muted mt-1">
                   <span>{paper.year}</span>
                   <span>/</span>
@@ -198,6 +225,16 @@ export default function PaperAdminPage() {
             </div>
           ))}
           {papers.length === 0 && <p className="text-muted font-mono">No papers found.</p>}
+        </div>
+      )}
+
+      {isDeploying && (
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
+           <div className="bg-background border border-accent/20 rounded-xl p-8 max-w-sm w-full shadow-2xl flex flex-col items-center text-center gap-4 animate-in zoom-in-95">
+             <div className="w-12 h-12 border-4 border-accent/30 border-t-accent rounded-full animate-spin"></div>
+             <h2 className="text-xl font-bold">Deploying to Vercel...</h2>
+             <p className="text-sm font-mono text-muted">Please wait while the site rebuilds. Data will refresh instantly when complete (~{deployCountdown}s).</p>
+           </div>
         </div>
       )}
     </div>

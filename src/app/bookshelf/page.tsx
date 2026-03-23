@@ -2,9 +2,10 @@ import fs from "fs";
 import path from "path";
 import { BooksClient } from "@/components/BooksClient";
 
-const booksData = JSON.parse(
+const rawBooksData = JSON.parse(
   fs.readFileSync(path.join(process.cwd(), "src/content/books/books.json"), "utf8")
 );
+const booksData = rawBooksData.filter((b: any) => !b.draft);
 
 export default function BookshelfPage() {
   return (

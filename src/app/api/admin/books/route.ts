@@ -58,6 +58,7 @@ export async function POST(req: NextRequest) {
       type: book.type || "technical",
       take: book.take || undefined,
       notesSlug: book.notesSlug || undefined,
+      draft: book.draft,
     });
 
     await saveBooks(books);

@@ -3,6 +3,7 @@ import { verifySession } from "@/lib/admin";
 import { getAllPapers } from "@/lib/papers";
 import fs from "fs";
 import path from "path";
+import { saveFile, deleteFile, fileExists } from "@/lib/github";
 
 const PAPERS_DIR = path.join(process.cwd(), "src/content/papers");
 
@@ -40,13 +41,15 @@ export async function POST(req: NextRequest) {
     }
 
     const filePath = path.join(PAPERS_DIR, `${data.slug}.mdx`);
-    if (fs.existsSync(filePath)) {
+    if (await fileExists(filePath)) {
       return NextResponse.json({ error: "Paper with this slug already exists" }, { status: 400 });
     }
 
-    fs.writeFileSync(filePath, generateMdxContent(data), "utf8");
+    await saveFile(filePath, generateMdxContent(data), `Create paper: ${data.slug}`);
     return NextResponse.json({ success: true, slug: data.slug });
-  } catch (err) {
+  } catch (err: any) {
+    console.error("Failed to create paper insight:", err);
+    if (err.message === "GitHub token expired or invalid") return NextResponse.json({ error: err.message }, { status: 401 });
     return NextResponse.json({ error: "Failed to create paper insight" }, { status: 500 });
   }
 }
@@ -65,17 +68,19 @@ export async function PUT(req: NextRequest) {
     const oldFilePath = path.join(PAPERS_DIR, `${data.originalSlug}.mdx`);
 
     if (data.slug !== data.originalSlug) {
-      if (fs.existsSync(newFilePath)) {
+      if (await fileExists(newFilePath)) {
         return NextResponse.json({ error: "Target slug already exists" }, { status: 400 });
       }
-      if (fs.existsSync(oldFilePath)) {
-        fs.unlinkSync(oldFilePath);
+      if (await fileExists(oldFilePath)) {
+        await deleteFile(oldFilePath, `Delete old paper: ${data.originalSlug}`);
       }
     }
 
-    fs.writeFileSync(newFilePath, generateMdxContent(data), "utf8");
+    await saveFile(newFilePath, generateMdxContent(data), `Update paper: ${data.slug}`);
     return NextResponse.json({ success: true, slug: data.slug });
-  } catch (err) {
+  } catch (err: any) {
+    console.error("Failed to update paper insight:", err);
+    if (err.message === "GitHub token expired or invalid") return NextResponse.json({ error: err.message }, { status: 401 });
     return NextResponse.json({ error: "Failed to update paper insight" }, { status: 500 });
   }
 }
@@ -93,12 +98,14 @@ export async function DELETE(req: NextRequest) {
     }
 
     const filePath = path.join(PAPERS_DIR, `${slug}.mdx`);
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+    if (await fileExists(filePath)) {
+      await deleteFile(filePath, `Delete paper: ${slug}`);
     }
 
     return NextResponse.json({ success: true });
-  } catch (err) {
+  } catch (err: any) {
+    console.error("Failed to delete paper insight:", err);
+    if (err.message === "GitHub token expired or invalid") return NextResponse.json({ error: err.message }, { status: 401 });
     return NextResponse.json({ error: "Failed to delete paper insight" }, { status: 500 });
   }
 }

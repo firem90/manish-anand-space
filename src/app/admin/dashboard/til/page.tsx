@@ -30,7 +30,12 @@ export default function TilAdminPage() {
     if (!confirm(`Are you sure you want to remove TIL from ${date}?`)) return;
     
     try {
-      await fetch(`/api/admin/til?title=${encodeURIComponent(title)}&date=${encodeURIComponent(date)}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/til?title=${encodeURIComponent(title)}&date=${encodeURIComponent(date)}`, { method: "DELETE" });
+      if (!res.ok) {
+        const err = await res.json();
+        alert(`Error: ${err.error}`);
+        return;
+      }
       fetchTils();
     } catch (e) {
       console.error("Failed to delete", e);

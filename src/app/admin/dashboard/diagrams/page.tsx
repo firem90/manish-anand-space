@@ -70,9 +70,14 @@ export default function DiagramsAdminPage() {
     if (!confirm(`Delete diagram "${name}"?`)) return;
 
     try {
-      await fetch(`/api/admin/diagrams?name=${encodeURIComponent(name)}`, {
+      const res = await fetch(`/api/admin/diagrams?name=${encodeURIComponent(name)}`, {
         method: "DELETE",
       });
+      if (!res.ok) {
+        const err = await res.json();
+        alert(`Error: ${err.error}`);
+        return;
+      }
       fetchDiagrams();
     } catch (e) {
       console.error("Failed to delete", e);

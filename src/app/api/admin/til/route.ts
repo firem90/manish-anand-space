@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifySession } from "@/lib/admin";
 import fs from "fs";
 import path from "path";
+import { saveFile } from "@/lib/github";
 
 const TIL_FILE = path.join(process.cwd(), "src/content/til/til.json");
 
@@ -13,12 +14,8 @@ function getTils() {
   return JSON.parse(data);
 }
 
-function saveTils(tils: any[]) {
-  const dir = path.dirname(TIL_FILE);
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-  fs.writeFileSync(TIL_FILE, JSON.stringify(tils, null, 2), "utf8");
+async function saveTils(tils: any[]) {
+  await saveFile(TIL_FILE, JSON.stringify(tils, null, 2), "Update TILs");
 }
 
 export async function GET() {
@@ -61,10 +58,11 @@ export async function POST(req: NextRequest) {
     // Keep sorted by date descending just in case
     tils.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-    saveTils(tils);
+    await saveTils(tils);
     return NextResponse.json({ success: true, til: tils[0] });
-  } catch (err) {
+  } catch (err: any) {
     console.error("Failed to add TIL:", err);
+    if (err.message === "GitHub token expired or invalid") return NextResponse.json({ error: err.message }, { status: 401 });
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
@@ -95,10 +93,11 @@ export async function PUT(req: NextRequest) {
 
     tils.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-    saveTils(tils);
+    await saveTils(tils);
     return NextResponse.json({ success: true, til: tils[index] });
-  } catch (err) {
+  } catch (err: any) {
     console.error("Failed to update TIL:", err);
+    if (err.message === "GitHub token expired or invalid") return NextResponse.json({ error: err.message }, { status: 401 });
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
@@ -118,11 +117,12 @@ export async function DELETE(req: NextRequest) {
 
     let tils = getTils();
     tils = tils.filter((t: any) => !(t.title === title && t.date === date));
-    saveTils(tils);
+    await saveTils(tils);
 
     return NextResponse.json({ success: true });
-  } catch (err) {
+  } catch (err: any) {
     console.error("Failed to delete TIL:", err);
+    if (err.message === "GitHub token expired or invalid") return NextResponse.json({ error: err.message }, { status: 401 });
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

@@ -3,6 +3,7 @@ import { verifySession } from "@/lib/admin";
 import { getAllPosts, getPostBySlug } from "@/lib/blog";
 import fs from "fs";
 import path from "path";
+import { saveFile, deleteFile, fileExists } from "@/lib/github";
 
 const BLOG_DIR = path.join(process.cwd(), "src/content/blog");
 
@@ -55,14 +56,15 @@ export async function POST(req: NextRequest) {
     }
 
     const filePath = path.join(BLOG_DIR, `${slug}.mdx`);
-    if (fs.existsSync(filePath)) {
+    if (await fileExists(filePath)) {
       return NextResponse.json({ error: "Post with this slug already exists" }, { status: 400 });
     }
 
-    fs.writeFileSync(filePath, generateMdxContent({ ...data, slug }), "utf8");
+    await saveFile(filePath, generateMdxContent({ ...data, slug }), `Create post: ${slug}`);
     return NextResponse.json({ success: true, slug });
-  } catch (err) {
+  } catch (err: any) {
     console.error("Failed to create post:", err);
+    if (err.message === "GitHub token expired or invalid") return NextResponse.json({ error: err.message }, { status: 401 });
     return NextResponse.json({ error: "Failed to create post" }, { status: 500 });
   }
 }
@@ -87,18 +89,19 @@ export async function PUT(req: NextRequest) {
     const oldFilePath = path.join(BLOG_DIR, `${originalSlug}.mdx`);
 
     if (slug !== originalSlug) {
-      if (fs.existsSync(newFilePath)) {
+      if (await fileExists(newFilePath)) {
         return NextResponse.json({ error: "Target slug already exists" }, { status: 400 });
       }
-      if (fs.existsSync(oldFilePath)) {
-        fs.unlinkSync(oldFilePath);
+      if (await fileExists(oldFilePath)) {
+        await deleteFile(oldFilePath, `Delete old post: ${originalSlug}`);
       }
     }
 
-    fs.writeFileSync(newFilePath, generateMdxContent({ ...data, slug }), "utf8");
+    await saveFile(newFilePath, generateMdxContent({ ...data, slug }), `Update post: ${slug}`);
     return NextResponse.json({ success: true, slug });
-  } catch (err) {
+  } catch (err: any) {
     console.error("Failed to update post:", err);
+    if (err.message === "GitHub token expired or invalid") return NextResponse.json({ error: err.message }, { status: 401 });
     return NextResponse.json({ error: "Failed to update post" }, { status: 500 });
   }
 }
@@ -117,13 +120,14 @@ export async function DELETE(req: NextRequest) {
 
     const safeSlug = sanitizeSlug(slug);
     const filePath = path.join(BLOG_DIR, `${safeSlug}.mdx`);
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+    if (await fileExists(filePath)) {
+      await deleteFile(filePath, `Delete post: ${safeSlug}`);
     }
 
     return NextResponse.json({ success: true });
-  } catch (err) {
+  } catch (err: any) {
     console.error("Failed to delete post:", err);
+    if (err.message === "GitHub token expired or invalid") return NextResponse.json({ error: err.message }, { status: 401 });
     return NextResponse.json({ error: "Failed to delete post" }, { status: 500 });
   }
 }

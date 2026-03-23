@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifySession } from "@/lib/admin";
 import fs from "fs";
 import path from "path";
+import { saveFile, deleteFile, fileExists } from "@/lib/github";
 
 const DIAGRAMS_DIR = path.join(process.cwd(), "src/content/diagrams");
 
@@ -68,15 +69,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Ensure directory exists
-    if (!fs.existsSync(DIAGRAMS_DIR)) {
-      fs.mkdirSync(DIAGRAMS_DIR, { recursive: true });
-    }
-
     const filePath = path.join(DIAGRAMS_DIR, `${sanitizedName}.excalidraw`);
-    const exists = fs.existsSync(filePath);
+    const exists = await fileExists(filePath);
 
-    fs.writeFileSync(filePath, text, "utf8");
+    await saveFile(filePath, text, `Upload diagram: ${sanitizedName}`);
 
     return NextResponse.json({
       success: true,
@@ -84,8 +80,9 @@ export async function POST(req: NextRequest) {
       replaced: exists,
       usage: `<Diagram file="${sanitizedName}" caption="Your caption here" />`,
     });
-  } catch (err) {
+  } catch (err: any) {
     console.error("Failed to upload diagram:", err);
+    if (err.message === "GitHub token expired or invalid") return NextResponse.json({ error: err.message }, { status: 401 });
     return NextResponse.json({ error: "Failed to upload diagram" }, { status: 500 });
   }
 }
@@ -103,13 +100,14 @@ export async function DELETE(req: NextRequest) {
     }
 
     const filePath = path.join(DIAGRAMS_DIR, `${name}.excalidraw`);
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+    if (await fileExists(filePath)) {
+      await deleteFile(filePath, `Delete diagram: ${name}`);
     }
 
     return NextResponse.json({ success: true });
-  } catch (err) {
+  } catch (err: any) {
     console.error("Failed to delete diagram:", err);
+    if (err.message === "GitHub token expired or invalid") return NextResponse.json({ error: err.message }, { status: 401 });
     return NextResponse.json({ error: "Failed to delete diagram" }, { status: 500 });
   }
 }

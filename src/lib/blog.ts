@@ -9,6 +9,7 @@ export type BlogPost = {
   summary: string;
   content: string;
   readTime: number;
+  draft: boolean;
 };
 
 const BLOG_DIR = path.join(process.cwd(), "src/content/blog");
@@ -29,6 +30,7 @@ export function getPostBySlug(slug: string): BlogPost | null {
     const dateMatch = /date:\s*"(.*)"/.exec(frontmatterText);
     const tagsMatch = /tags:\s*\[(.*)\]/.exec(frontmatterText);
     const summaryMatch = /summary:\s*"(.*)"/.exec(frontmatterText);
+    const draftMatch = /draft:\s*(true|false)/.exec(frontmatterText);
 
     if (!titleMatch || !dateMatch || !tagsMatch) {
       return null;
@@ -36,6 +38,7 @@ export function getPostBySlug(slug: string): BlogPost | null {
 
     const tags = tagsMatch[1].split(",").map(t => t.replace(/"/g, "").trim());
     const summary = summaryMatch ? summaryMatch[1] : "";
+    const draft = draftMatch ? draftMatch[1] === "true" : false;
     
     // estimate read time (avg 200 words per minute)
     const words = content.split(/\s+/).length;
@@ -48,7 +51,8 @@ export function getPostBySlug(slug: string): BlogPost | null {
       tags,
       summary,
       content,
-      readTime
+      readTime,
+      draft
     };
   } catch (e) {
     return null;
@@ -61,7 +65,7 @@ export function getAllPosts(): BlogPost[] {
     const posts = files
       .filter((file) => file.endsWith(".mdx"))
       .map((file) => getPostBySlug(file.replace(/\.mdx$/, "")))
-      .filter((post): post is BlogPost => post !== null)
+      .filter((post): post is BlogPost => post !== null && !post.draft)
       .sort((a, b) => (new Date(b.date).getTime() - new Date(a.date).getTime()));
     return posts;
   } catch (e) {

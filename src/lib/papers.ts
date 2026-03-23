@@ -12,6 +12,7 @@ export type PaperPost = {
   summary: string;
   content: string;
   readTime: number;
+  draft?: boolean;
 };
 
 const PAPERS_DIR = path.join(process.cwd(), "src/content/papers");
@@ -34,12 +35,14 @@ export function getPaperBySlug(slug: string): PaperPost | null {
     const dateMatch = /date:\s*"(.*)"/.exec(frontmatterText);
     const tagsMatch = /tags:\s*\[(.*)\]/.exec(frontmatterText);
     const summaryMatch = /summary:\s*"(.*)"/.exec(frontmatterText);
+    const draftMatch = /draft:\s*(true|false)/.exec(frontmatterText);
 
     if (!titleMatch || !authorsMatch || !yearMatch || !paperUrlMatch || !dateMatch || !tagsMatch || !summaryMatch) {
       return null;
     }
 
     const tags = tagsMatch[1].split(",").map(t => t.replace(/"/g, "").trim());
+    const draft = draftMatch ? draftMatch[1] === "true" : false;
     const words = content.split(/\s+/).length;
     const readTime = Math.max(1, Math.ceil(words / 200));
 
@@ -54,6 +57,7 @@ export function getPaperBySlug(slug: string): PaperPost | null {
       summary: summaryMatch[1],
       content,
       readTime,
+      draft,
     };
   } catch (e) {
     return null;
@@ -66,7 +70,7 @@ export function getAllPapers(): PaperPost[] {
     const papers = files
       .filter((file) => file.endsWith(".mdx"))
       .map((file) => getPaperBySlug(file.replace(/\.mdx$/, "")))
-      .filter((paper): paper is PaperPost => paper !== null)
+      .filter((paper): paper is PaperPost => paper !== null && !paper.draft)
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     return papers;
   } catch (e) {

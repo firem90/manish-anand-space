@@ -8,6 +8,8 @@ export default function TilAdminPage() {
   const [loading, setLoading] = useState(true);
   
   const [editingTil, setEditingTil] = useState<any | null>(null);
+  const [isDeploying, setIsDeploying] = useState(false);
+  const [deployCountdown, setDeployCountdown] = useState(60);
 
   const fetchTils = async () => {
     setLoading(true);
@@ -57,6 +59,7 @@ export default function TilAdminPage() {
       date: formData.get("date"),
       content: formData.get("content"),
       tags,
+      draft: formData.get("draft") === "on",
     };
 
     try {
@@ -68,7 +71,23 @@ export default function TilAdminPage() {
       
       if (res.ok) {
         setEditingTil(null);
-        fetchTils();
+        if (window.location.hostname !== "localhost") {
+            setIsDeploying(true);
+            setDeployCountdown(60);
+            const interval = setInterval(() => {
+                setDeployCountdown(prev => {
+                    if (prev <= 1) {
+                        clearInterval(interval);
+                        setIsDeploying(false);
+                        fetchTils();
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+        } else {
+            fetchTils();
+        }
       } else {
         const err = await res.json();
         alert(`Error: ${err.error}`);
@@ -126,6 +145,13 @@ export default function TilAdminPage() {
                   placeholder="Drop a quick note about what you learned..." 
                 />
               </div>
+
+              <div className="flex flex-col gap-1.5 md:col-span-2">
+                <label className="flex items-center gap-3 cursor-pointer select-none">
+                  <input type="checkbox" name="draft" defaultChecked={editingTil.draft} className="w-4 h-4 accent-accent" />
+                  <span className="font-mono text-sm font-bold">Archive / Hide from public view</span>
+                </label>
+              </div>
             </div>
 
             <button type="submit" className="bg-accent text-white font-bold py-2.5 rounded-sm hover:brightness-110 flex items-center justify-center gap-2 mt-4">
@@ -168,7 +194,10 @@ export default function TilAdminPage() {
                 <div className="flex flex-col min-w-0 pr-4">
                   <div className="flex items-center gap-3 mb-1">
                     <time className="text-xs font-mono text-accent shrink-0">{til.date}</time>
-                    <h3 className="font-bold text-base">{til.title}</h3>
+                    <h3 className="font-bold text-base flex items-center gap-2">
+                      {til.title}
+                      {til.draft && <span className="text-[10px] bg-yellow-500/20 text-yellow-500 px-2 py-0.5 rounded-full uppercase tracking-widest font-bold">Archived</span>}
+                    </h3>
                   </div>
                   <p className="text-sm font-serif text-foreground/80 my-2 line-clamp-2">{til.content}</p>
                   {til.tags && til.tags.length > 0 && (
@@ -202,6 +231,16 @@ export default function TilAdminPage() {
             ))}
             {tils.length === 0 && <p className="text-muted font-mono">No TIL notes found.</p>}
           </div>
+        </div>
+      )}
+
+      {isDeploying && (
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
+           <div className="bg-background border border-accent/20 rounded-xl p-8 max-w-sm w-full shadow-2xl flex flex-col items-center text-center gap-4 animate-in zoom-in-95">
+             <div className="w-12 h-12 border-4 border-accent/30 border-t-accent rounded-full animate-spin"></div>
+             <h2 className="text-xl font-bold">Deploying to Vercel...</h2>
+             <p className="text-sm font-mono text-muted">Please wait while the site rebuilds. Data will refresh instantly when complete (~{deployCountdown}s).</p>
+           </div>
         </div>
       )}
     </div>

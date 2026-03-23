@@ -10,6 +10,8 @@ export default function BooksAdminPage() {
   // Edit & Add state
   const [editingBook, setEditingBook] = useState<any | null>(null);
   const [showMyTake, setShowMyTake] = useState(false);
+  const [isDeploying, setIsDeploying] = useState(false);
+  const [deployCountdown, setDeployCountdown] = useState(60);
 
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
@@ -134,6 +136,7 @@ export default function BooksAdminPage() {
       status: formData.get("status"),
       take: showMyTake ? formData.get("take") : undefined,
       notesSlug: formData.get("notesSlug") || undefined,
+      draft: formData.get("draft") === "on",
     };
 
     try {
@@ -145,7 +148,23 @@ export default function BooksAdminPage() {
       
       if (res.ok) {
         setEditingBook(null);
-        fetchBooks();
+        if (window.location.hostname !== "localhost") {
+            setIsDeploying(true);
+            setDeployCountdown(60);
+            const interval = setInterval(() => {
+                setDeployCountdown(prev => {
+                    if (prev <= 1) {
+                        clearInterval(interval);
+                        setIsDeploying(false);
+                        fetchBooks();
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+        } else {
+            fetchBooks();
+        }
       } else {
         const err = await res.json();
         alert(`Error: ${err.error}`);
@@ -247,6 +266,16 @@ export default function BooksAdminPage() {
             </div>
 
             <div className="pt-4 border-t border-muted/20">
+              <label className="flex items-center gap-3 cursor-pointer select-none mb-4">
+                <input 
+                  type="checkbox" 
+                  name="draft"
+                  defaultChecked={editingBook.draft}
+                  className="w-4 h-4 accent-accent"
+                />
+                <span className="font-mono text-sm font-bold">Archive / Hide from public view</span>
+              </label>
+
               <label className="flex items-center gap-3 cursor-pointer select-none mb-4">
                 <input 
                   type="checkbox" 
@@ -421,7 +450,10 @@ export default function BooksAdminPage() {
                   </div>
                   
                   <div className="flex flex-col min-w-0">
-                    <h3 className="font-bold text-sm md:text-base truncate">{book.title}</h3>
+                    <h3 className="font-bold text-sm md:text-base truncate flex items-center gap-2">
+                      {book.title}
+                      {book.draft && <span className="text-[10px] bg-yellow-500/20 text-yellow-500 px-2 py-0.5 rounded-full uppercase tracking-widest font-bold">Archived</span>}
+                    </h3>
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-mono text-muted mt-1">
                       <span className="truncate max-w-[150px] sm:max-w-none">{book.author}</span>
                       <span className="hidden sm:inline">·</span>
@@ -450,6 +482,16 @@ export default function BooksAdminPage() {
             ))}
             {books.length === 0 && <p className="text-muted font-mono col-span-full">No books added yet.</p>}
           </div>
+        </div>
+      )}
+
+      {isDeploying && (
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
+           <div className="bg-background border border-accent/20 rounded-xl p-8 max-w-sm w-full shadow-2xl flex flex-col items-center text-center gap-4 animate-in zoom-in-95">
+             <div className="w-12 h-12 border-4 border-accent/30 border-t-accent rounded-full animate-spin"></div>
+             <h2 className="text-xl font-bold">Deploying to Vercel...</h2>
+             <p className="text-sm font-mono text-muted">Please wait while the site rebuilds. Data will refresh instantly when complete (~{deployCountdown}s).</p>
+           </div>
         </div>
       )}
     </div>

@@ -2,9 +2,10 @@ import fs from "fs";
 import path from "path";
 import { TilList } from "@/components/TilList";
 
-const tilData = JSON.parse(
+const rawTilData = JSON.parse(
   fs.readFileSync(path.join(process.cwd(), "src/content/til/til.json"), "utf8")
 );
+const tilData = rawTilData.filter((t: any) => !t.draft);
 
 export default function TilPage() {
   return (
